@@ -198,15 +198,3 @@ export function computeDiff(
     // Report first failing type check
     for (const expectedType of specificTypes) {
       if (!isValidType(declaredValue, expectedType)) {
-        typeMismatches.push({ variableName: varName, declaredValue, expectedType });
-        break;
-      }
-    }
-  }
-  
-  return {
-    missing,
-    unused,
-    typeMismatches
-  };
-}

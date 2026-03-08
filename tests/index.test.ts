@@ -2,7 +2,7 @@ import { describe, it, expect } from "bun:test";
 import * as fs from "fs";
 import * as path from "path";
 import * as os from "os";
-import { scanFiles, parseEnvFile, computeDiff, parseCliArgs } from "../src/index.ts";
+import { scanFiles, parseEnvFile, computeDiff, parseCliArgs, loadEnvFiles } from "../src/index.ts";
 
 describe("env-audit public API", () => {
   it("scanFiles extracts process.env references with line numbers and inferred types", () => {
