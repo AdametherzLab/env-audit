@@ -104,10 +104,38 @@ describe("env-audit public API", () => {
     const result = parseCliArgs(argv);
     
     expect(path.isAbsolute(result.root)).toBe(true);
-    expect(result.envFiles.length).toBe(1);
-    expect(path.isAbsolute(result.envFiles[0])).toBe(true);
+    expect(result.envFiles).toEqual([".env", ".env.local", ".env.development"].map(p => path.resolve(p)));
     expect(result.ci).toBe(true);
     expect(result.verbose).toBe(true);
     expect(result.extensions).toEqual([".ts", ".js", ".tsx", ".jsx"]);
+  });
+
+  it("computes diffs across multiple env files with precedence", () => {
+    const tmpDir = fs.mkdtempSync(path.join(os.tmpdir(), "env-audit-merge-"));
+    try {
+      const envBase = path.join(tmpDir, ".env");
+      const envLocal = path.join(tmpDir, ".env.local");
+      fs.writeFileSync(envBase, "OVERLAP=base\nBASE_ONLY=1\n");
+      fs.writeFileSync(envLocal, "OVERLAP=local\nLOCAL_ONLY=2\n");
+      
+      const references: EnvReference[] = [
+        { variableName: "OVERLAP", inferredType: "string", filePath: "/test.ts", lineNumber: 1 },
+        { variableName: "BASE_ONLY", inferredType: "number", filePath: "/test.ts", lineNumber: 2 },
+        { variableName: "LOCAL_ONLY", inferredType: "number", filePath: "/test.ts", lineNumber: 3 }
+      ];
+      
+      const result = computeDiff({ envFilePaths: [envBase, envLocal] }, references);
+      
+      expect(result.missing).toEqual([]);
+      expect(result.unused).toEqual([]);
+      expect(result.typeMismatches).toEqual([]);
+      expect(loadEnvFiles([envBase, envLocal])).toEqual({
+        OVERLAP: "local",
+        BASE_ONLY: "1",
+        LOCAL_ONLY: "2"
+      });
+    } finally {
+      fs.rmSync(tmpDir, { recursive: true, force: true });
+    }
   });
 });

@@ -108,8 +108,11 @@ export function loadEnvFiles(filePaths: readonly string[]): EnvMap {
   const merged: Record<string, string> = {};
   
   for (const filePath of filePaths) {
-    const env = parseEnvFile(filePath);
-    Object.assign(merged, env);
+    const resolvedPath = path.resolve(filePath);
+    if (fs.existsSync(resolvedPath)) {
+      const env = parseEnvFile(resolvedPath);
+      Object.assign(merged, env);
+    }
   }
   
   return merged;
@@ -201,5 +204,9 @@ export function computeDiff(
     }
   }
   
-  return { missing, unused, typeMismatches };
+  return {
+    missing,
+    unused,
+    typeMismatches
+  };
 }
